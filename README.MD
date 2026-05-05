@@ -26,7 +26,8 @@
 如果你有一台全新的 Ubuntu 24.04 LTS VPS，直接以 `root` 用户执行以下命令：
 
 ```bash
-wget -O Hysteria2-Perfect.sh [https://raw.githubusercontent.com/yazige/Hysteria2-Ultimate/main/Hysteria2-Perfect.sh](https://raw.githubusercontent.com/yazige/Hysteria2-Ultimate/main/Hysteria2-Perfect.sh) && bash Hysteria2-Perfect.sh ```
+wget -O Hysteria2-Perfect.sh [https://raw.githubusercontent.com/yazige/Hysteria2-Ultimate/main/Hysteria2-Perfect.sh](https://raw.githubusercontent.com/yazige/Hysteria2-Ultimate/main/Hysteria2-Perfect.sh) && bash Hysteria2-Perfect.sh
+```
 
 注：执行后将进入可视化彩色交互面板。日常管理可随时通过 bash Hysteria2-Perfect.sh 唤出。
 
