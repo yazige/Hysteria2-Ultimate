@@ -10,7 +10,7 @@
 
 软件适配：
 软件适配:
-- **手机端**: ios 【小火箭Shadowrocket】、【[V2box](https://apps.apple.com/us/app/v2box-v2ray-client/id6446814690)，安卓 【[Neko Box](https://github.com/MatsuriDayo/NekoBoxForAndroid/releases)】
+- **手机端**: ios 【小火箭Shadowrocket、[V2box](https://apps.apple.com/us/app/v2box-v2ray-client/id6446814690)】，安卓 【[Neko Box](https://github.com/MatsuriDayo/NekoBoxForAndroid/releases)】
 - **PC端**: windows/Mac 【[Clash Verge](https://github.com/clash-verge-rev/clash-verge-rev/releases)、[hiddify-app](https://github.com/hiddify/hiddify-app)】
 ---
 
