@@ -13,6 +13,7 @@
 ## 🛡️ 核心底层优化 (The 5 Pillars)
 
 本脚本在底层无差别集成了以下 5 大护城河，确保高并发下的系统稳定性：
+
 1. **【内存护城河】** 强制 2GB Swap 兜底，有效防止晚高峰流量洪峰导致的 OOM 进程自杀。
 2. **【CPU 防过载】** 服务端硬锁定 300Mbps 上下行带宽，保护单核 CPU 算力，防止系统假死。
 3. **【UDP 终极调优】** 针对 QUIC 协议特性，暴力扩容 UDP 收发缓冲区至 16MB。
@@ -31,7 +32,7 @@ wget -O Hysteria2-Perfect.sh [https://raw.githubusercontent.com/yazige/Hysteria2
 
 注：执行后将进入可视化彩色交互面板。日常管理可随时通过 bash Hysteria2-Perfect.sh 唤出。
 
-🎛️ 面板菜单解析与业务场景应用
+##  🎛️ 面板菜单解析与业务场景应用
 本面板提供四个核心选项，覆盖从个人使用到团队运维的全场景：
 
 🟢 A. 一键无脑部署 (单用户版)
@@ -60,8 +61,8 @@ wget -O Hysteria2-Perfect.sh [https://raw.githubusercontent.com/yazige/Hysteria2
 
 效果：不破坏原有配置，原地升级 Swap、UDP 缓冲区、并发限制等架构级优化。
 
-🧠 进阶：学习 Mega-Prompt 工程
+##  🧠 进阶：学习 Mega-Prompt 工程
 如果你对如何通过 Prompt 工程调教 AI 输出此类硬核代码感兴趣，请查看 Hysteria2-MegaPrompt.md。该文件展示了如何定义角色、设定硬性指标以及构建自动化输出规范。
 
-📝 License
+##  📝 License
 本项目基于 MIT License 开源。
