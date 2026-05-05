@@ -9,8 +9,9 @@
 专为 **1C1G (1核 CPU，1G 内存)** 等处于性能边缘的 VPS 打造，榨干机器性能，构建坚如磐石的代理防线。
 
 软件适配：
-- **手机端**：ios【小火箭】， 安卓【V2rayN, Clash Box】
-- **PC端**：windows【V2rayN, Clash Verge】, Mac 【V2rayN, Clash Verge】
+软件适配:
+- **手机端**: ios 【小火箭Shadowrocket】、【[V2box](https://apps.apple.com/us/app/v2box-v2ray-client/id6446814690)，安卓 【[Neko Box](https://github.com/MatsuriDayo/NekoBoxForAndroid/releases)】
+- **PC端**: windows/Mac 【[Clash Verge](https://github.com/clash-verge-rev/clash-verge-rev/releases)、[hiddify-app](https://github.com/hiddify/hiddify-app)】
 ---
 
 ## 🛡️ 核心底层优化 (The 5 Pillars)
