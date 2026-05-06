@@ -11,9 +11,16 @@ PREFIX="**"
 
 # ================= 辅助函数：环境依赖与网络优化 (共享) =================
 function prepare_env_and_optimize() {
+    echo -e "${YELLOW}${PREFIX} 正在检测并清理可能冲突的老旧 Hysteria 服务...${NC}"
+    # 彻底关停并禁用老脚本的 hysteria.service，释放 443 端口
+    if systemctl is-active --quiet hysteria; then
+        systemctl stop hysteria 2>/dev/null || true
+    fi
+    systemctl disable hysteria 2>/dev/null || true
+
     echo -e "${YELLOW}${PREFIX} 正在更新组件并获取 IP...${NC}"
     apt-get update -y -qq
-    DEBIAN_FRONTEND=noninteractive apt-get install -y -qq curl wget openssl iptables iptables-persistent netfilter-persistent > /dev/null 2>&1
+    DEBIAN_FRONTEND=noninteractive apt-get install -y -qq curl wget openssl iptables iptables-persistent netfilter-persistent ufw > /dev/null 2>&1
 
     PUBLIC_IP=$(curl -4 -s --connect-timeout 5 icanhazip.com || curl -4 -s --connect-timeout 5 ifconfig.me)
     if [ -z "$PUBLIC_IP" ]; then
@@ -24,6 +31,8 @@ function prepare_env_and_optimize() {
     echo -e "${YELLOW}${PREFIX} 正在配置 2G 虚拟内存 (Swap)...${NC}"
     SWAP_TOTAL=$(free -m | awk '/^Swap:/{print $2}')
     if [ -z "$SWAP_TOTAL" ] || [ "$SWAP_TOTAL" -lt 1900 ]; then
+        swapoff -a 2>/dev/null
+        rm -f /swapfile
         fallocate -l 2G /swapfile || dd if=/dev/zero of=/swapfile bs=1M count=2048 status=none
         chmod 600 /swapfile
         mkswap /swapfile > /dev/null 2>&1
@@ -31,7 +40,7 @@ function prepare_env_and_optimize() {
         grep -q "/swapfile" /etc/fstab || echo '/swapfile none swap sw 0 0' >> /etc/fstab
     fi
 
-    echo -e "${YELLOW}${PREFIX} 正在启用原生 BBR 加速与 UDP 16MB 扩容...${NC}"
+    echo -e "${YELLOW}${PREFIX} 正在启用原生 BBR+FQ 与 UDP 16MB 扩容...${NC}"
     cat << SYSCTL_EOF > /etc/sysctl.d/99-hysteria.conf
 net.core.default_qdisc=fq
 net.ipv4.tcp_congestion_control=bbr
@@ -66,7 +75,7 @@ EOF_LIMITS
     fi
 }
 
-function configure_systemd_and_iptables() {
+function configure_systemd_and_firewall() {
     cat << EOF_SERVICE > /etc/systemd/system/hysteria-server.service
 [Unit]
 Description=Hysteria 2 Server
@@ -87,8 +96,18 @@ WantedBy=multi-user.target
 EOF_SERVICE
 
     systemctl daemon-reload
-    iptables -t nat -A PREROUTING -p udp --dport 40000:50000 -j REDIRECT --to-ports 443 2>/dev/null || true
-    netfilter-persistent save > /dev/null 2>&1
+
+    echo -e "${YELLOW}${PREFIX} 正在配置安全防火墙放行规则...${NC}"
+    # UFW 放行 (针对 Ubuntu 等系统)
+    ufw allow 443/tcp 2>/dev/null || true
+    ufw allow 443/udp 2>/dev/null || true
+    ufw allow 40000:50000/udp 2>/dev/null || true
+    
+    # iptables 强制放行 (针对纯净 Debian/CentOS 等系统)
+    iptables -I INPUT -p tcp --dport 443 -j ACCEPT 2>/dev/null || true
+    iptables -I INPUT -p udp --dport 443 -j ACCEPT 2>/dev/null || true
+    iptables -I INPUT -p udp --dport 40000:50000 -j ACCEPT 2>/dev/null || true
+    netfilter-persistent save > /dev/null 2>&1 || true
 
     systemctl enable hysteria-server.service > /dev/null 2>&1
     systemctl restart hysteria-server.service
@@ -108,7 +127,7 @@ function install_single() {
     prepare_env_and_optimize
 
     cat << EOF2 > /etc/hysteria/config.yaml
-listen: :443
+listen: :443,40000-50000
 tls:
   cert: /etc/hysteria/server.crt
   key: /etc/hysteria/server.key
@@ -129,7 +148,7 @@ bandwidth:
   down: 300 mbps
 EOF2
 
-    configure_systemd_and_iptables
+    configure_systemd_and_firewall
 
     echo -e "${GREEN}🎉 部署大功告成！直接将以下配置分发即可：${NC}\n"
     
@@ -163,7 +182,7 @@ rules:
   - GEOIP,CN,DIRECT
   - MATCH,🚀 节点选择
 EOF3
-    echo -e "\n${CYAN}💡 提示：本次已打通所有底层并发任督二脉，支持海量连接！${NC}"
+    echo -e "\n${CYAN}💡 提示：冲突已自动解决，防火墙已打通，原生端口跳跃已激活！${NC}"
     echo ""
     read -n 1 -s -r -p "按任意键返回主菜单..."
 }
@@ -194,7 +213,7 @@ function install_multi() {
 
     # 第一部分：写入配置文件头部
     cat << EOF2_HEAD > /etc/hysteria/config.yaml
-listen: :443
+listen: :443,40000-50000
 tls:
   cert: /etc/hysteria/server.crt
   key: /etc/hysteria/server.key
@@ -232,7 +251,7 @@ bandwidth:
   down: 300 mbps
 EOF2_TAIL
 
-    configure_systemd_and_iptables
+    configure_systemd_and_firewall
 
     clear
     echo -e "${GREEN}🎉 多用户部署大功告成！${NC}\n"
@@ -261,7 +280,7 @@ proxies:
     server: ${PUBLIC_IP}
     port: 443
     ports: 40000-50000
-    password: ${pass}
+    password: "${name}:${pass}"
     sni: bing.com
     skip-cert-verify: true
     obfs: salamander
@@ -283,7 +302,7 @@ EOF_YAML_SINGLE
         echo -e "\n"
     done
 
-    echo -e "${CYAN}💡 提示：所有底层并发优化已生效。您可在主菜单选择 [C] 随时管理这些独立账号！${NC}"
+    echo -e "${CYAN}💡 提示：冲突已自动清理，防火墙已打通，原生端口跳跃已激活！主菜单 [C] 随时管理独立账号！${NC}"
     echo ""
     read -n 1 -s -r -p "按任意键返回主菜单..."
 }
@@ -348,7 +367,7 @@ function update_multi_user() {
             echo -e "👤 用户: ${CYAN}${name}${NC} | 密码: ${YELLOW}${pass}${NC}"
             echo -e "🔗 链接: ${GREEN}hysteria2://${name}:${pass}@${PUBLIC_IP}:443/?mport=40000-50000&sni=bing.com&obfs=salamander&obfsParam=${OBFS_PASSWORD}&insecure=1#HY2-${name}${NC}\n"
         done <<< "$users_raw_updated"
-        echo -e "${YELLOW}💡 提示: 若该用户使用 Clash，请通知对方将其原配置中的 [password] 修改为新密码即可。${NC}"
+        echo -e "${YELLOW}💡 提示: 若该用户使用 Clash，请通知对方将其原配置中的 [password] 修改为新密码 \"${target_user}:${new_pass}\" 即可。${NC}"
     else
         echo -e "${YELLOW}操作取消。${NC}"
     fi
@@ -408,8 +427,14 @@ EOF_LIMITS
     echo -e "${GREEN}${PREFIX} 全局并发限制破除成功！${NC}"
 
     echo -e "${YELLOW}${PREFIX} [4/4] 正在检测代理服务状态...${NC}"
+    # 强制清理老旧冲突
+    if systemctl is-active --quiet hysteria; then
+        systemctl stop hysteria 2>/dev/null || true
+        systemctl disable hysteria 2>/dev/null || true
+    fi
+
     if systemctl list-unit-files | grep -q "hysteria"; then
-        echo -e "${YELLOW}${PREFIX} 检测到 Hysteria 服务，正在重启以接入最新底层网络环境...${NC}"
+        echo -e "${YELLOW}${PREFIX} 检测到新版 Hysteria 服务，正在重启以接入最新底层网络环境...${NC}"
         systemctl restart hysteria-server.service 2>/dev/null || systemctl restart hysteria.service 2>/dev/null
         sleep 1
         echo -e "${GREEN}${PREFIX} 代理服务已成功重启并接管新环境！${NC}"
