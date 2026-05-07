@@ -1,4 +1,4 @@
-# 🚀 Hysteria2 Architect Mega-Prompt & Deployer
+# 🚀 Hysteria2 一键安装版本【免域名，自签证书，支持多用户密码管理】
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Protocol: QUIC](https://img.shields.io/badge/Protocol-QUIC-red.svg)](https://github.com/apernet/hysteria)
